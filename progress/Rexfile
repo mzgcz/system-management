@@ -1,0 +1,37 @@
+user "root";
+password "cstorfs";
+pass_auth;
+
+group myserver => "192.168.7.152";
+
+# 查看指定进程
+desc "根据名称，显示进程. e.g.: rex show --name=fio";
+task "show", group => "myserver", sub {
+  my ($params) = @_;
+  my $name = $params->{'name'};
+  my $output = run "ps -ef|grep $name|grep -v grep";
+  say $output;
+};
+
+# 根据进程号消灭进程
+sub delete_progress_id {
+  my $id = shift;
+
+  run "kill -9 $id";
+};
+
+# 消灭指定进程
+desc "根据名称，消灭进程. e.g.: rex delete --name=fio";
+task "delete", group => "myserver", sub {
+  my ($params) = @_;
+  my $name = $params->{'name'};
+  my $output = run "ps -ef|grep $name|grep -v grep";
+
+  open(my $fh, "<", \$output);
+  while (<$fh>) {
+    if (/^\S+\s+(\d+)/) {
+      delete_progress_id($1);
+    }
+  }
+  close($fh);
+};
